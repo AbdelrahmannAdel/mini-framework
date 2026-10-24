@@ -14,7 +14,7 @@ export function createElement(vnode) {
   const el = document.createElement(vnode.tag)
 
   for (const [key, value] of Object.entries(vnode.attrs)) {
-    if (key === "on") {      
+    if (key === "on") {
       setHandlers(el, value)
     } else {
       setAttr(el, key, value)
@@ -29,13 +29,23 @@ export function createElement(vnode) {
   return el
 }
 
-// value and checked must be set as properties; everything else as attributes.
-function setAttr(el, key, value) {
-  if (key === "value" || key === "checked") {
-    el[key] = value
+// value and checked are DOM properties, everything else is an attribute.
+// Properties are only written when they differ, so the cursor doesn't jump.
+export function setAttr(el, key, value) {
+  if (key === "value") {
+    const v = value ?? ""
+    if (el.value !== v) el.value = v
     return
   }
-  if (value === null || value === undefined || value === false) return
+  if (key === "checked") {
+    const c = Boolean(value)
+    if (el.checked !== c) el.checked = c
+    return
+  }
+  if (value === null || value === undefined || value === false) {
+    el.removeAttribute(key)
+    return
+  }
   el.setAttribute(key, value === true ? "" : value)
 }
 

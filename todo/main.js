@@ -1,7 +1,9 @@
-import { h, createStore, createApp, initRouter, navigate } from "../framework/index.js"
+import { h, createStore, createApp, initRouter } from "../framework/index.js"
 
 const store = createStore({
   route: "/",
+  text: "",
+  count: 0,
   items: [
     { text: "one", done: false },
     { text: "two", done: true },
@@ -23,16 +25,21 @@ function toggle(item) {
 
 function view(state) {
   return h("div", {}, [
-    h("p", {}, ["Route: " + state.route]),
+    h("input", {
+      placeholder: "type here",
+      on: { input: (e) => store.setState({ text: e.target.value }) }
+    }),
+    h("p", {}, ["You typed: " + state.text]),
+
+    h("button", {
+      on: { click: () => store.setState(s => ({ count: s.count + 1 })) }
+    }, ["+1 (" + state.count + ")"]),
 
     h("p", {}, [
       h("a", { href: "#/" }, ["All"]), " | ",
       h("a", { href: "#/active" }, ["Active"]), " | ",
       h("a", { href: "#/completed" }, ["Completed"])
     ]),
-
-    h("button", { on: { click: () => navigate("/completed") } },
-      ["Go to Completed (button)"]),
 
     h("ul", {}, visibleItems(state).map(item =>
       h("li", { on: { click: () => toggle(item) } },
