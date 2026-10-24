@@ -1,35 +1,45 @@
-import { h, createStore, createApp } from "../framework/index.js"
+import { h, createStore, createApp, initRouter, navigate } from "../framework/index.js"
 
-const store = createStore({ count: 0, items: [] })
+const store = createStore({
+  route: "/",
+  items: [
+    { text: "one", done: false },
+    { text: "two", done: true },
+    { text: "three", done: false }
+  ]
+})
+
+function visibleItems(state) {
+  if (state.route === "/active") return state.items.filter(i => !i.done)
+  if (state.route === "/completed") return state.items.filter(i => i.done)
+  return state.items
+}
+
+function toggle(item) {
+  store.setState(s => ({
+    items: s.items.map(i => (i === item ? { ...i, done: !i.done } : i))
+  }))
+}
 
 function view(state) {
   return h("div", {}, [
-    h("p", {}, ["Count: " + state.count]),
+    h("p", {}, ["Route: " + state.route]),
 
-    h("button", {
-      on: { click: () => store.setState(s => ({ count: s.count + 1 })) }
-    }, ["+1"]),
+    h("p", {}, [
+      h("a", { href: "#/" }, ["All"]), " | ",
+      h("a", { href: "#/active" }, ["Active"]), " | ",
+      h("a", { href: "#/completed" }, ["Completed"])
+    ]),
 
-    h("button", {
-      on: {
-        click: () => store.setState(s => ({
-          items: [...s.items, "item " + (s.items.length + 1)]
-        }))
-      }
-    }, ["Add item"]),
+    h("button", { on: { click: () => navigate("/completed") } },
+      ["Go to Completed (button)"]),
 
-    h("p", {}, ["Items: " + state.items.length + " (click one to remove it)"]),
-
-    h("ul", {}, state.items.map((text, i) =>
-      h("li", {
-        on: {
-          click: () => store.setState(s => ({
-            items: s.items.filter((_, j) => j !== i)
-          }))
-        }
-      }, [text])
+    h("ul", {}, visibleItems(state).map(item =>
+      h("li", { on: { click: () => toggle(item) } },
+        [item.text + (item.done ? " (done)" : "")])
     ))
   ])
 }
 
+initRouter(store)
 createApp({ root: document.getElementById("app"), store, view })
