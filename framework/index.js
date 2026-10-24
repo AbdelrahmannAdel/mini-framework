@@ -1,1 +1,1 @@
-console.log("framework loaded")
+export { h, createElement, mount } from "./dom.js"
