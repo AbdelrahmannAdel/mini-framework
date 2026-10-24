@@ -69,9 +69,7 @@ function patchChildren(el, oldKids, newKids) {
   }
 }
 
-// Updates the DOM inside `container` from oldVnode to newVnode.
+// Updates the DOM inside `container` from the old vnode(s) to the new one(s).
 export function patch(container, oldVnode, newVnode) {
-  const current = container.firstChild
-  const next = patchNode(current, oldVnode, newVnode)
-  if (next !== current) container.replaceChild(next, current)
+  patchChildren(container, [].concat(oldVnode), [].concat(newVnode))
 }

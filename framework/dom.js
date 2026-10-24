@@ -1,5 +1,7 @@
 import { setHandlers } from "./events.js"
 
+const isEmpty = (v) => v === null || v === undefined || v === false
+
 // Describes an element as plain data. Creates nothing in the browser.
 export function h(tag, attrs = {}, children = []) {
   return { tag, attrs, children }
@@ -22,14 +24,24 @@ export function createElement(vnode) {
   }
 
   for (const child of vnode.children) {
-    if (child === null || child === undefined || child === false) continue
+    if (isEmpty(child)) continue
     el.appendChild(createElement(child))
   }
+
+  // The element isn't on the page yet. A microtask runs after the current
+  // render has attached it, so the focus call lands on a connected element.
+  if (vnode.attrs.autofocus) queueMicrotask(() => focusElement(el))
 
   return el
 }
 
-// value and checked are DOM properties, everything else is an attribute.
+function focusElement(el) {
+  if (!el.isConnected) return
+  el.focus()
+  if (el.type === "text") el.setSelectionRange(el.value.length, el.value.length)
+}
+
+// value and checked are DOM properties; everything else is an attribute.
 // Properties are only written when they differ, so the cursor doesn't jump.
 export function setAttr(el, key, value) {
   if (key === "value") {
@@ -42,15 +54,18 @@ export function setAttr(el, key, value) {
     if (el.checked !== c) el.checked = c
     return
   }
-  if (value === null || value === undefined || value === false) {
+  if (isEmpty(value)) {
     el.removeAttribute(key)
     return
   }
   el.setAttribute(key, value === true ? "" : value)
 }
 
-// Renders a vnode into a container, replacing what was there.
+// Renders a vnode (or an array of vnodes) into a container.
 export function mount(vnode, container) {
   container.innerHTML = ""
-  container.appendChild(createElement(vnode))
+  for (const v of [].concat(vnode)) {
+    if (isEmpty(v)) continue
+    container.appendChild(createElement(v))
+  }
 }
